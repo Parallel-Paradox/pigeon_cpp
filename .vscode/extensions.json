@@ -1,5 +1,6 @@
 {
     "recommendations": [
-        "tboox.xmake-vscode"
+        "tboox.xmake-vscode",
+        "ms-vscode.cpptools"
     ]
 }
