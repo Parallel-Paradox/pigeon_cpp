@@ -1,0 +1,4 @@
+#ifndef PIGEON_ENGINE
+#define PIGEON_ENGINE
+
+#endif  // PIGEON_ENGINE
