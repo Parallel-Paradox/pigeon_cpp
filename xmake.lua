@@ -17,6 +17,10 @@ option_end()
 
 add_rules("mode.debug", "mode.release")
 
+if is_config("kind", "shared") then
+    add_defines("PIGEON_SHARED")
+end
+
 target("pigeon_engine")
     set_kind(get_config("kind"))
     add_files("src/*.cpp")

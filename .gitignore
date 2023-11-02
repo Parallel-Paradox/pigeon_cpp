@@ -7,3 +7,4 @@ build/
 
 # Generated when xmake.lua is changed.
 .vscode/compile_commands.json
+.vscode/.cache

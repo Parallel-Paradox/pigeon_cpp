@@ -1,6 +1,7 @@
 {
     "recommendations": [
         "tboox.xmake-vscode",
-        "ms-vscode.cpptools"
+        "ms-vscode.cpptools",
+        "llvm-vs-code-extensions.vscode-clangd"
     ]
 }
