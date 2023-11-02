@@ -21,5 +21,6 @@
         "--all-scopes-completion",
         "--completion-style=detailed",
         "--header-insertion=iwyu"
-    ]
+    ],
+    "files.eol": "\n"
 }
