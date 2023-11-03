@@ -23,7 +23,8 @@ end
 
 target("pigeon_engine")
     set_kind(get_config("kind"))
-    add_files("src/*.cpp")
+    add_files("src/**.cpp")
+    add_includedirs("src", {public = true})
 target_end()
 
 if get_config("examples") == true then
