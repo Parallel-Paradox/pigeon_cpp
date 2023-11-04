@@ -22,6 +22,7 @@ if is_config("kind", "shared") then
 end
 
 target("pigeon_engine")
+    add_defines("BUILD_PIGEON")
     set_kind(get_config("kind"))
     add_files("src/**.cpp")
     add_includedirs("src", {public = true})
