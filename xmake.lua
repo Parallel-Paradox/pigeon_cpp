@@ -32,6 +32,7 @@ target_end()
 if get_config("examples") == true then
   target("basic_example")
     set_kind("binary")
+    set_targetdir("build/examples")
     add_deps("pigeon_engine")
     add_files("examples/basic_example.cpp")
   target_end()
@@ -65,8 +66,9 @@ if get_config("test") == true then
     target("test." .. path.basename(file))
       set_kind("binary")
       set_group("test")
+      set_targetdir("build/tests")
       add_files(file)
-
+      add_deps("pigeon_engine")
       -- Why add ldflags? https://github.com/xmake-io/xmake/discussions/4332
       add_packages("googletest")
       if is_plat("windows") then

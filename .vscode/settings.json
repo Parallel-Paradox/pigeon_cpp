@@ -6,6 +6,7 @@
     "files.insertFinalNewline": true,
     "files.trimFinalNewlines": true,
     "cSpell.words": [
+        "STREQ",
         "xmake"
     ],
     "xmake.additionalConfigArguments": [
@@ -23,5 +24,6 @@
         "--header-insertion=iwyu"
     ],
     "files.eol": "\n",
-    "editor.tabSize": 2
+    "editor.tabSize": 2,
+    "testMate.cpp.test.executables": "build/tests/test.**"
 }
