@@ -140,6 +140,10 @@ requires std::movable<T> class Array {
 
   bool IsEmpty() const { return size_ == 0; }
 
+  size_t Size() const { return size_; }
+
+  size_t Capacity() const { return capacity_; }
+
   // TODO: iterator
 
  private:

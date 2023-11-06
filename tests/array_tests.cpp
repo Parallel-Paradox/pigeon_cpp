@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <stdint.h>
+#include <sys/_types/_int32_t.h>
 #include <stdexcept>
 #include "pigeon_framework/base/container/array.hpp"
 
@@ -39,8 +40,8 @@ class OwnedInt {
 };
 
 TEST(ArrayTests, CopyConstructed) {
-  Array<int> src = {0, 1};
-  Array<int> dst = Array<int>(src);
+  Array<int32_t> src = {0, 1};
+  Array<int32_t> dst = Array<int32_t>(src);
   EXPECT_EQ(dst[0], 0);
   EXPECT_EQ(dst[1], 1);
   EXPECT_EQ(src, dst);
@@ -69,9 +70,9 @@ TEST(ArrayTests, MoveConstructed) {
 }
 
 TEST(ArrayTests, SetByCopy) {
-  Array<int> src = {0, 1};
-  Array<int> dst;
-  dst = Array<int>(src);
+  Array<int32_t> src = {0, 1};
+  Array<int32_t> dst;
+  dst = Array<int32_t>(src);
   EXPECT_EQ(dst[0], 0);
   EXPECT_EQ(dst[1], 1);
   EXPECT_EQ(src, dst);
@@ -100,4 +101,13 @@ TEST(ArrayTests, SetByMove) {
   EXPECT_EQ(dst[0].num_, 0);
   EXPECT_EQ(dst[1].num_, 1);
   EXPECT_EQ(destruct_cnt, 1);
+}
+
+TEST(ArrayTests, CapacityReserve) {
+  Array<int32_t> array = {0, 1, 2};
+  EXPECT_EQ(array.Size(), 3);
+  EXPECT_EQ(array.Capacity(), 3);
+  array.PushBack(3);
+  EXPECT_EQ(array.Size(), 4);
+  EXPECT_EQ(array.Capacity(), 6);
 }
