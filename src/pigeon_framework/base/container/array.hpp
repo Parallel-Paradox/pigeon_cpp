@@ -3,10 +3,108 @@
 
 #include <concepts>
 #include <initializer_list>
+#include <iterator>
 #include <stdexcept>
 #include "pigeon_framework/define.hpp"
 
 namespace pigeon {
+
+template <typename T>
+class ArrayIterator {
+ public:
+  using iterator_concept = std::contiguous_iterator_tag;
+  using iterator_category = std::random_access_iterator_tag;
+  using iterator_type = ArrayIterator;
+  using value_type = T;
+  using difference_type = ptrdiff_t;
+  using pointer = T*;
+  using reference = T&;
+
+  ArrayIterator() = default;
+
+  ArrayIterator(const ArrayIterator& other) : ptr_(other.ptr_) {}
+
+  ArrayIterator(pointer ptr) : ptr_(ptr) {}
+
+  reference operator*() const { return *ptr_; }
+
+  pointer operator->() const { return ptr_; }
+
+  reference operator[](difference_type diff) const { return ptr_[diff]; }
+
+  iterator_type& operator++() {
+    ++ptr_;
+    return *this;
+  }
+
+  iterator_type operator++(int) {
+    iterator_type temp(*this);
+    ++(*this);
+    return temp;
+  }
+
+  iterator_type& operator--() {
+    --ptr_;
+    return *this;
+  }
+
+  iterator_type operator--(int) {
+    iterator_type temp(*this);
+    --(*this);
+    return temp;
+  }
+
+  iterator_type& operator+=(difference_type diff) {
+    ptr_ += diff;
+    return *this;
+  }
+
+  iterator_type operator+(difference_type diff) const {
+    iterator_type temp(*this);
+    temp += diff;
+    return temp;
+  }
+
+  iterator_type& operator-=(difference_type diff) {
+    ptr_ -= diff;
+    return *this;
+  }
+
+  iterator_type operator-(difference_type diff) const {
+    iterator_type temp(*this);
+    temp -= diff;
+    return temp;
+  }
+
+  difference_type operator-(const iterator_type& other) const {
+    return ptr_ - other.ptr_;
+  }
+
+  bool operator==(const iterator_type& other) const {
+    return ptr_ == other.ptr_;
+  }
+
+  bool operator!=(const iterator_type& other) const {
+    return !(*this == other);
+  }
+
+  bool operator<(const iterator_type& other) const { return ptr_ < other.ptr_; }
+
+  bool operator>(const iterator_type& other) const { return other < *this; }
+
+  bool operator>=(const iterator_type& other) const { return !(*this < other); }
+
+  bool operator<=(const iterator_type& other) const { return !(other < *this); }
+
+ private:
+  pointer ptr_;
+};
+
+template <typename T>
+ArrayIterator<T> operator+(typename ArrayIterator<T>::difference_type diff,
+                           ArrayIterator<T> iter) {
+  return iter + diff;
+}
 
 template <typename T>
 requires std::movable<T> class Array {
@@ -27,7 +125,7 @@ requires std::movable<T> class Array {
       size_ = other.size_;
       capacity_ = other.capacity_;
       data_ = new T[capacity_];
-      for (size_t i = 0; i < size_; i++) {
+      for (size_t i = 0; i < size_; ++i) {
         data_[i] = other.data_[i];
       }
     }
@@ -45,7 +143,7 @@ requires std::movable<T> class Array {
     size_ = other.size_;
     capacity_ = other.capacity_;
     data_ = new T[capacity_];
-    for (size_t i = 0; i < size_; i++) {
+    for (size_t i = 0; i < size_; ++i) {
       data_[i] = std::move(other.data_[i]);
     }
     other.Clear();
@@ -59,7 +157,7 @@ requires std::movable<T> class Array {
     return *this;
   }
 
-  ~Array() { Clear(); }
+  ~Array() noexcept { Clear(); }
 
   T& operator[](size_t index) { return data_[index]; }
 
@@ -73,7 +171,7 @@ requires std::movable<T> class Array {
     if constexpr (!std::equality_comparable<T>) {
       return false;
     } else {
-      for (size_t i = 0; i < size_; i++) {
+      for (size_t i = 0; i < size_; ++i) {
         if (data_[i] != other.data_[i]) {
           return false;
         }
@@ -111,7 +209,7 @@ requires std::movable<T> class Array {
       return;
     }
     T* new_data = new T[size];
-    for (size_t i = 0; i < size_; i++) {
+    for (size_t i = 0; i < size_; ++i) {
       new_data[i] = std::move(data_[i]);
     }
     if (data_ != nullptr) {
@@ -144,7 +242,16 @@ requires std::movable<T> class Array {
 
   size_t Capacity() const { return capacity_; }
 
-  // TODO: iterator
+  using Iterator = ArrayIterator<T>;
+  using ConstIterator = ArrayIterator<const T>;
+
+  Iterator begin() { return Iterator(data_); }
+
+  Iterator end() { return Iterator(data_ + size_); }
+
+  ConstIterator begin() const { return ConstIterator(data_); }
+
+  ConstIterator end() const { return ConstIterator(data_ + size_); }
 
  private:
   void EnsureNotFull() {

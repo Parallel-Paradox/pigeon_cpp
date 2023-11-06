@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include <stdint.h>
-#include <sys/_types/_int32_t.h>
+#include <iterator>
 #include <stdexcept>
 #include "pigeon_framework/base/container/array.hpp"
 
@@ -110,4 +110,22 @@ TEST(ArrayTests, CapacityReserve) {
   array.PushBack(3);
   EXPECT_EQ(array.Size(), 4);
   EXPECT_EQ(array.Capacity(), 6);
+}
+
+TEST(ArrayTests, IterateArray) {
+  EXPECT_TRUE(std::contiguous_iterator<Array<int32_t>::Iterator>);
+  EXPECT_TRUE(std::contiguous_iterator<Array<int32_t>::ConstIterator>);
+  Array<int32_t> array = {0, 1, 2};
+  for (auto iter = array.begin(); iter != array.end(); ++iter) {
+    *iter += 1;
+  }
+  for (auto& num : array) {
+    num += 1;
+  }
+  const Array<int32_t> compare = {2, 3, 4};
+  auto arr_iter = array.begin();
+  auto cmp_iter = compare.begin();
+  for (int32_t i = 0; i < 3; ++i) {
+    EXPECT_EQ(arr_iter[i], cmp_iter[i]);
+  }
 }
