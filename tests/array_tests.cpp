@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <stdint.h>
+#include <sys/_types/_int32_t.h>
 #include <iterator>
 #include <stdexcept>
 #include "pigeon_framework/base/container/array.hpp"
@@ -107,9 +108,52 @@ TEST(ArrayTests, CapacityReserve) {
   Array<int32_t> array = {0, 1, 2};
   EXPECT_EQ(array.Size(), 3);
   EXPECT_EQ(array.Capacity(), 3);
+
   array.PushBack(3);
   EXPECT_EQ(array.Size(), 4);
   EXPECT_EQ(array.Capacity(), 6);
+
+  array.Reserve(5);
+  EXPECT_EQ(array.Size(), 4);
+  EXPECT_EQ(array.Capacity(), 6);
+
+  array.SetCapacity(5);
+  EXPECT_EQ(array.Size(), 4);
+  EXPECT_EQ(array.Capacity(), 5);
+
+  array.ShrinkToFit();
+  EXPECT_EQ(array.Size(), 4);
+  EXPECT_EQ(array.Size(), array.Capacity());
+}
+
+TEST(ArrayTests, ResizeArray) {
+  Array<int32_t> array = {1, 2};
+  EXPECT_EQ(array.Size(), 2);
+  EXPECT_EQ(array.Capacity(), 2);
+
+  array.Resize(3);
+  EXPECT_EQ(array.Size(), 3);
+  EXPECT_EQ(array.Capacity(), 3);
+  EXPECT_EQ(array[2], 0);
+
+  array.Resize(1);
+  EXPECT_EQ(array.Size(), 1);
+  EXPECT_EQ(array.Capacity(), 3);
+}
+
+TEST(ArrayTests, CommonOps) {
+  Array<int32_t> array;
+  array.PushBack(0);     // 0
+  array.EmplaceBack(2);  // 0, 2
+  array.Insert(1, 1);    // 0, 1, 2
+  array.Insert(1, 3);    // 0, 3, 1, 2
+  array.Remove(1);       // 0, 1, 2
+  array.SwapRemove(0);   // 2, 1
+  array.Swap(0, 1);      // 1, 2
+
+  EXPECT_EQ(array[0], 1);
+  EXPECT_EQ(array[1], 2);
+  EXPECT_EQ(array.Size(), 2);
 }
 
 TEST(ArrayTests, IterateArray) {

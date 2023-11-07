@@ -1,6 +1,7 @@
 #ifndef PIGEON_FRAMEWORK_BASE_CONTAINER_ARRAY
 #define PIGEON_FRAMEWORK_BASE_CONTAINER_ARRAY
 
+#include <algorithm>
 #include <concepts>
 #include <initializer_list>
 #include <iterator>
@@ -107,8 +108,14 @@ ArrayIterator<T> operator+(typename ArrayIterator<T>::difference_type diff,
 }
 
 template <typename T>
-requires std::movable<T> class Array {
+concept ArrayValue = std::default_initializable<T> && std::movable<T>;
+
+template <ArrayValue T>
+class Array {
  public:
+  using Iterator = ArrayIterator<T>;
+  using ConstIterator = ArrayIterator<const T>;
+
   Array() = default;
 
   Array(std::initializer_list<T> list) {
@@ -186,14 +193,14 @@ requires std::movable<T> class Array {
     } else {
       EnsureNotFull();
       data_[size_] = val;
-      size_++;
+      ++size_;
     }
   }
 
   void EmplaceBack(T&& val) {
     EnsureNotFull();
     data_[size_] = std::move(val);
-    size_++;
+    ++size_;
   }
 
   template <typename... Args>
@@ -201,22 +208,34 @@ requires std::movable<T> class Array {
     EnsureNotFull();
     (&data_[size_])->~T();  // Manual destroy before placement new.
     new (&data_[size_]) T(args...);
-    size_++;
+    ++size_;
   }
 
-  void Reserve(size_t size) {
-    if (size <= capacity_) {
+  void Reserve(size_t capacity) {
+    if (capacity <= capacity_) {
       return;
     }
-    T* new_data = new T[size];
-    for (size_t i = 0; i < size_; ++i) {
-      new_data[i] = std::move(data_[i]);
+    SetCapacity(capacity);
+  }
+
+  void Resize(size_t size) {
+    if (size == size_) {
+      return;
+    } else if (size > size_) {
+      Reserve(size);
+      size_ = size;
+      return;
     }
-    if (data_ != nullptr) {
-      delete[] data_;
+    while (size_ > size) {
+      PopBack();
     }
-    data_ = new_data;
-    capacity_ = size;
+  }
+
+  void ShrinkToFit() {
+    if (size_ == capacity_) {
+      return;
+    }
+    SetCapacity(size_);
   }
 
   void Clear() {
@@ -232,8 +251,38 @@ requires std::movable<T> class Array {
     if (IsEmpty()) {
       throw std::out_of_range("Try to pop from an empty array.");
     }
-    size_--;
+    --size_;
     return std::move(data_[size_]);
+  }
+
+  void Swap(size_t index_a, size_t index_b) {
+    if (index_a == index_b) {
+      return;
+    }
+    T temp(std::move(data_[index_a]));
+    data_[index_a] = std::move(data_[index_b]);
+    data_[index_b] = std::move(temp);
+  }
+
+  void Insert(size_t index, const T& val) { Insert(index, T(val)); }
+
+  void Insert(size_t index, T&& val) {
+    EmplaceBack(std::move(val));
+    for (size_t i = size_ - 1; i > index; --i) {
+      Swap(i, i - 1);
+    }
+  }
+
+  T Remove(size_t index) {
+    for (size_t i = index; i < size_ - 1; ++i) {
+      Swap(i, i + 1);
+    }
+    return PopBack();
+  }
+
+  T SwapRemove(size_t index) {
+    Swap(index, size_ - 1);
+    return PopBack();
   }
 
   bool IsEmpty() const { return size_ == 0; }
@@ -242,8 +291,20 @@ requires std::movable<T> class Array {
 
   size_t Capacity() const { return capacity_; }
 
-  using Iterator = ArrayIterator<T>;
-  using ConstIterator = ArrayIterator<const T>;
+  void SetCapacity(size_t capacity) {
+    size_t size = std::min(capacity, size_);
+
+    T* new_data = new T[capacity];
+    for (size_t i = 0; i < size; ++i) {
+      new_data[i] = std::move(data_[i]);
+    }
+    if (data_ != nullptr) {
+      delete[] data_;
+    }
+    data_ = new_data;
+    size_ = size;
+    capacity_ = capacity;
+  }
 
   Iterator begin() { return Iterator(data_); }
 
