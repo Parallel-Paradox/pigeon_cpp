@@ -6,7 +6,6 @@
 #include <initializer_list>
 #include <iterator>
 #include <stdexcept>
-#include "pigeon_framework/define.hpp"
 
 namespace pigeon {
 
@@ -25,7 +24,7 @@ class ArrayIterator {
 
   ArrayIterator(const ArrayIterator& other) : ptr_(other.ptr_) {}
 
-  ArrayIterator(pointer ptr) : ptr_(ptr) {}
+  explicit ArrayIterator(pointer ptr) : ptr_(ptr) {}
 
   reference operator*() const { return *ptr_; }
 

@@ -1,7 +1,7 @@
 #ifndef PIGEON_FRAMEWORK_BASE_AUTO_PTR_OWNED
 #define PIGEON_FRAMEWORK_BASE_AUTO_PTR_OWNED
 
-#include "pigeon_framework/define.hpp"
+#include <utility>
 
 namespace pigeon {
 
@@ -23,16 +23,18 @@ class Owned {
   }
 
   Owned& operator=(Owned&& other) noexcept {
-    if (this == &other) {
-      return *this;
+    if (this != &other) {
+      this->~Owned();
+      new (this) Owned(std::move(other));
     }
-    delete raw_ptr_;
-    raw_ptr_ = other.raw_ptr_;
-    other.raw_ptr_ = nullptr;
     return *this;
   }
 
   ~Owned() { delete raw_ptr_; }
+
+  T* operator->() const { return raw_ptr_; }
+
+  T& operator*() const { return *raw_ptr_; }
 
   T* Get() const { return raw_ptr_; }
 

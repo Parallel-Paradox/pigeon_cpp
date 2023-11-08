@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 #include <stdint.h>
-#include <sys/_types/_int32_t.h>
 #include <iterator>
 #include <stdexcept>
 #include "pigeon_framework/base/container/array.hpp"
