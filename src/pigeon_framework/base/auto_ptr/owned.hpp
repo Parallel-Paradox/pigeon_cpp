@@ -1,6 +1,7 @@
 #ifndef PIGEON_FRAMEWORK_BASE_AUTO_PTR_OWNED
 #define PIGEON_FRAMEWORK_BASE_AUTO_PTR_OWNED
 
+#include <functional>
 #include <utility>
 
 namespace pigeon {
@@ -8,17 +9,21 @@ namespace pigeon {
 template <typename T>
 class Owned {
  public:
+  using Destructor = std::function<void(T*)>;
+
   Owned() = default;
 
-  explicit Owned(T* raw_ptr) : raw_ptr_(raw_ptr) {}
+  explicit Owned(T* raw_ptr, Destructor destructor = DefaultDestructor)
+      : raw_ptr_(raw_ptr), destructor_(destructor) {}
 
   template <typename... Args>
-  Owned(Args... args) : raw_ptr_(new T(args...)) {}
+  Owned(Args... args, Destructor destructor = DefaultDestructor)
+      : raw_ptr_(new T(args...)), destructor_(destructor) {}
 
   Owned(const Owned& other) = delete;
 
-  Owned(Owned&& other) noexcept {
-    raw_ptr_ = other.raw_ptr_;
+  Owned(Owned&& other) noexcept
+      : raw_ptr_(other.raw_ptr_), destructor_(other.destructor_) {
     other.raw_ptr_ = nullptr;
   }
 
@@ -30,7 +35,7 @@ class Owned {
     return *this;
   }
 
-  ~Owned() { delete raw_ptr_; }
+  ~Owned() { destructor_(raw_ptr_); }
 
   T* operator->() const { return raw_ptr_; }
 
@@ -41,7 +46,10 @@ class Owned {
   bool IsNull() const { return raw_ptr_ == nullptr; }
 
  private:
+  static void DefaultDestructor(T* raw_ptr) { delete raw_ptr; }
+
   T* raw_ptr_{nullptr};
+  Destructor destructor_;
 };
 
 }  // namespace pigeon
