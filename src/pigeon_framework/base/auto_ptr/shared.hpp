@@ -11,23 +11,50 @@ class Shared {
  public:
   using Destructor = std::function<void(T*)>;
 
+  struct RefCount {
+    virtual size_t Get() = 0;
+    virtual void Increase() = 0;
+    virtual bool TryDecrease() = 0;
+    virtual ~RefCount() = default;
+  };
+
+  struct ThreadLocalRefCount : public RefCount {
+    size_t cnt_{1};
+
+    size_t Get() override { return cnt_; }
+
+    void Increase() override { cnt_++; }
+
+    bool TryDecrease() override {
+      cnt_--;
+      return cnt_ == 0 ? false : true;
+    }
+
+    ~ThreadLocalRefCount() override = default;
+  };
+
+  struct ThreadSafeRefCount : public RefCount {
+    std::atomic_size_t cnt_{1};
+
+    size_t Get() override { return cnt_.load(); }
+
+    void Increase() override { cnt_.fetch_add(1); }
+
+    bool TryDecrease() override {
+      return cnt_.fetch_sub(1) == 1 ? false : true;
+    }
+
+    ~ThreadSafeRefCount() = default;
+  };
+
   Shared() = default;
-
-  explicit Shared(T* raw_ptr, Destructor destructor = DefaultDestructor)
-      : raw_ptr_(raw_ptr), ref_cnt_(new size_t(1)), destructor_(destructor) {}
-
-  template <typename... Args>
-  Shared(Args... args, Destructor destructor = DefaultDestructor)
-      : raw_ptr_(new T(args...)),
-        ref_cnt_(new size_t(1)),
-        destructor_(destructor) {}
 
   Shared(const Shared& other)
       : raw_ptr_(other.raw_ptr_),
         ref_cnt_(other.ref_cnt_),
         destructor_(other.destructor_) {
     if (ref_cnt_ != nullptr) {
-      *ref_cnt_ += 1;
+      ref_cnt_->Increase();
     }
   }
 
@@ -59,12 +86,34 @@ class Shared {
     if (ref_cnt_ == nullptr) {
       return;
     }
-    if (*ref_cnt_ == 1) {
+    if (!ref_cnt_->TryDecrease()) {
       destructor_(raw_ptr_);
       delete ref_cnt_;
-    } else {
-      *ref_cnt_--;
     }
+  }
+
+  static Shared ByThreadLocal(T* raw_ptr,
+                              Destructor destructor = DefaultDestructor) {
+    return std::move(Shared(raw_ptr, new ThreadLocalRefCount(), destructor));
+  }
+
+  template <typename... Args>
+  static Shared ByThreadLocal(Args... args,
+                              Destructor destructor = DefaultDestructor) {
+    return std::move(
+        Shared(new T(args...), new ThreadLocalRefCount(), destructor));
+  }
+
+  static Shared ByThreadSafe(T* raw_ptr,
+                             Destructor destructor = DefaultDestructor) {
+    return std::move(Shared(raw_ptr, new ThreadSafeRefCount(), destructor));
+  }
+
+  template <typename... Args>
+  static Shared ByThreadSafe(Args... args,
+                             Destructor destructor = DefaultDestructor) {
+    return std::move(
+        Shared(new T(args...), new ThreadSafeRefCount(), destructor));
   }
 
   T* operator->() const { return raw_ptr_; }
@@ -75,13 +124,16 @@ class Shared {
 
   bool IsNull() const { return raw_ptr_ == nullptr; }
 
-  size_t RefCnt() const { return *ref_cnt_; }
+  size_t RefCnt() const { return ref_cnt_->Get(); }
 
  private:
+  Shared(T* raw_ptr, RefCount* ref_cnt, Destructor destructor)
+      : raw_ptr_(raw_ptr), ref_cnt_(ref_cnt), destructor_(destructor) {}
+
   static void DefaultDestructor(T* raw_ptr) { delete raw_ptr; }
 
   T* raw_ptr_{nullptr};
-  size_t* ref_cnt_{nullptr};
+  RefCount* ref_cnt_{nullptr};
   Destructor destructor_;
 };
 
