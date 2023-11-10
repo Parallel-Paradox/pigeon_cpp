@@ -1,6 +1,7 @@
 #ifndef PIGEON_FRAMEWORK_BASE_AUTO_PTR_SHARED
 #define PIGEON_FRAMEWORK_BASE_AUTO_PTR_SHARED
 
+#include <atomic>
 #include <functional>
 #include <utility>
 

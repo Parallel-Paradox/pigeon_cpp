@@ -130,7 +130,7 @@ class Array {
     } else {
       size_ = other.size_;
       capacity_ = other.capacity_;
-      data_ = new T[capacity_];
+      data_ = new T[capacity_]();
       for (size_t i = 0; i < size_; ++i) {
         data_[i] = other.data_[i];
       }
@@ -148,7 +148,7 @@ class Array {
   Array(Array&& other) noexcept {
     size_ = other.size_;
     capacity_ = other.capacity_;
-    data_ = new T[capacity_];
+    data_ = new T[capacity_]();
     for (size_t i = 0; i < size_; ++i) {
       data_[i] = std::move(other.data_[i]);
     }
@@ -293,7 +293,7 @@ class Array {
   void SetCapacity(size_t capacity) {
     size_t size = std::min(capacity, size_);
 
-    T* new_data = new T[capacity];
+    T* new_data = new T[capacity]();
     for (size_t i = 0; i < size; ++i) {
       new_data[i] = std::move(data_[i]);
     }
@@ -317,7 +317,7 @@ class Array {
   void EnsureNotFull() {
     if (capacity_ == 0) {
       capacity_ = 1;
-      data_ = new T[1];
+      data_ = new T[1]();
     } else if (size_ == capacity_) {
       Reserve(2 * capacity_);
     }
