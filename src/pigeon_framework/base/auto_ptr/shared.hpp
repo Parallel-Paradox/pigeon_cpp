@@ -7,6 +7,9 @@
 namespace pigeon {
 
 template <typename T>
+class Unretained;
+
+template <typename T>
 class Shared {
  public:
   using Destructor = std::function<void(T*)>;
@@ -127,6 +130,8 @@ class Shared {
   size_t RefCnt() const { return ref_cnt_->Get(); }
 
  private:
+  friend class Unretained<T>;
+
   Shared(T* raw_ptr, RefCount* ref_cnt, Destructor destructor)
       : raw_ptr_(raw_ptr), ref_cnt_(ref_cnt), destructor_(destructor) {}
 
