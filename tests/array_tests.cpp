@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <stdint.h>
+#include <exception>
 #include <iterator>
 #include <stdexcept>
 #include "pigeon_framework/base/container/array.hpp"
@@ -140,19 +141,59 @@ TEST(ArrayTests, ResizeArray) {
   EXPECT_EQ(array.Capacity(), 3);
 }
 
-TEST(ArrayTests, CommonOps) {
+TEST(ArrayTests, CopyableCommonOps) {
   Array<int32_t> array;
   array.PushBack(0);     // 0
   array.EmplaceBack(2);  // 0, 2
   array.Insert(1, 1);    // 0, 1, 2
-  array.Insert(1, 3);    // 0, 3, 1, 2
-  array.Remove(1);       // 0, 1, 2
+  array.Insert(3, 3);    // 0, 1, 2, 3
+  array.Remove(3);       // 0, 1, 2
   array.SwapRemove(0);   // 2, 1
   array.Swap(0, 1);      // 1, 2
 
   EXPECT_EQ(array[0], 1);
   EXPECT_EQ(array[1], 2);
   EXPECT_EQ(array.Size(), 2);
+}
+
+TEST(ArrayTests, MovableFailOps) {
+  int32_t destruct_cnt = 0;
+  Array<OwnedInt> array;
+  try {
+    array.PushBack(OwnedInt(0, &destruct_cnt));
+    EXPECT_TRUE(false);
+  } catch (std::invalid_argument e) {
+    EXPECT_STREQ(e.what(), "The type of array can't be copy.");
+  }
+  try {
+    OwnedInt num(1, &destruct_cnt);
+    array.Insert(1, num);
+    EXPECT_TRUE(false);
+  } catch (std::invalid_argument e) {
+    EXPECT_STREQ(e.what(), "The type of array can't be copy.");
+  }
+}
+
+TEST(ArrayTests, OutOfRangeFailOps) {
+  Array<int32_t> array;
+  try {
+    array.Insert(1, 1);
+    EXPECT_TRUE(false);
+  } catch (std::out_of_range e) {
+    EXPECT_STREQ(e.what(), "Insert out of range.");
+  }
+  try {
+    array.Remove(1);
+    EXPECT_TRUE(false);
+  } catch (std::out_of_range e) {
+    EXPECT_STREQ(e.what(), "Remove out of range.");
+  }
+  try {
+    array.SwapRemove(1);
+    EXPECT_TRUE(false);
+  } catch (std::out_of_range e) {
+    EXPECT_STREQ(e.what(), "Remove out of range.");
+  }
 }
 
 TEST(ArrayTests, IterateArray) {

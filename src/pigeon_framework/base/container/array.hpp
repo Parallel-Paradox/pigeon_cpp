@@ -263,9 +263,18 @@ class Array {
     data_[index_b] = std::move(temp);
   }
 
-  void Insert(size_t index, const T& val) { Insert(index, T(val)); }
+  void Insert(size_t index, const T& val) {
+    if constexpr (!std::copyable<T>) {
+      throw std::invalid_argument("The type of array can't be copy.");
+    } else {
+      Insert(index, T(val));
+    }
+  }
 
   void Insert(size_t index, T&& val) {
+    if (index > size_) {
+      throw std::out_of_range("Insert out of range.");
+    }
     EmplaceBack(std::move(val));
     for (size_t i = size_ - 1; i > index; --i) {
       Swap(i, i - 1);
@@ -273,6 +282,9 @@ class Array {
   }
 
   T Remove(size_t index) {
+    if (index >= size_) {
+      throw std::out_of_range("Remove out of range.");
+    }
     for (size_t i = index; i < size_ - 1; ++i) {
       Swap(i, i + 1);
     }
@@ -280,6 +292,9 @@ class Array {
   }
 
   T SwapRemove(size_t index) {
+    if (index >= size_) {
+      throw std::out_of_range("Remove out of range.");
+    }
     Swap(index, size_ - 1);
     return PopBack();
   }
