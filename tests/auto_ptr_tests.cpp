@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
-#include "pigeon_framework\base\auto_ptr\owned.hpp"
-#include "pigeon_framework\base\auto_ptr\shared.hpp"
-#include "pigeon_framework\base\auto_ptr\unretained.hpp"
+#include "pigeon_framework/base/auto_ptr/owned.hpp"
+#include "pigeon_framework/base/auto_ptr/shared.hpp"
+#include "pigeon_framework/base/auto_ptr/unretained.hpp"
 
 using namespace pigeon;
 
