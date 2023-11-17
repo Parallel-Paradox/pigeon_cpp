@@ -5,27 +5,27 @@
 
 namespace pigeon {
 
-template <typename T>
+template <typename T, AsRefCount R>
 class Unretained {
  public:
-  using Destructor = typename Shared<T>::Destructor;
-  using RefCount = typename Shared<T>::RefCount;
+  using Destructor = typename Shared<T, R>::Destructor;
+  using RefCount = typename Shared<T, R>::RefCount;
 
   Unretained() = default;
 
-  explicit Unretained(const Shared<T>& ptr)
+  explicit Unretained(const Shared<T, R>& ptr)
       : raw_ptr_(ptr.raw_ptr_),
         ref_cnt_(ptr.ref_cnt_),
         destructor_(ptr.destructor_) {}
 
   ~Unretained() = default;
 
-  Unretained& operator=(const Shared<T>& ptr) {
+  Unretained& operator=(const Shared<T, R>& ptr) {
     new (this) Unretained(ptr);
     return *this;
   }
 
-  Shared<T> TryUpgrade() const {
+  Shared<T, R> TryUpgrade() const {
     if (ref_cnt_ != nullptr) {
       ref_cnt_->Increase();
     }
@@ -37,6 +37,12 @@ class Unretained {
   RefCount* ref_cnt_{nullptr};
   Destructor destructor_;
 };
+
+template <typename T>
+using UnretainedLocal = Unretained<T, ThreadLocalRefCount>;
+
+template <typename T>
+using UnretainedAsync = Unretained<T, ThreadSafeRefCount>;
 
 };  // namespace pigeon
 
