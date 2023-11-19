@@ -3,6 +3,11 @@
 
 #include <functional>
 #include <utility>
+#include "pigeon_framework/define.hpp"
+
+#define INSTANTIATE_OWNED(ValueType)                         \
+  template class PIGEON_API std::function<void(ValueType*)>; \
+  template class PIGEON_API pigeon::Owned<ValueType>;
 
 namespace pigeon {
 

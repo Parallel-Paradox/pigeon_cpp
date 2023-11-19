@@ -6,7 +6,7 @@
 #include "pigeon_framework/define.hpp"
 #include "pigeon_framework/task/task.hpp"
 
-AUTO_PTR_INSTANTIATE(Owned, pigeon::Task);
+INSTANTIATE_OWNED(pigeon::Task);
 
 namespace pigeon {
 

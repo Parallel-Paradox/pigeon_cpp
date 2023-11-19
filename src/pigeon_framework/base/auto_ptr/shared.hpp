@@ -5,6 +5,17 @@
 #include <concepts>
 #include <functional>
 #include <utility>
+#include "pigeon_framework/define.hpp"
+
+#define INSTANTIATE_SHARED_ASYNC(ValueType)                  \
+  template class PIGEON_API std::function<void(ValueType*)>; \
+  template class PIGEON_API                                  \
+      pigeon::Shared<ValueType, pigeon::ThreadSafeRefCount>;
+
+#define INSTANTIATE_SHARED_LOCAL(ValueType)                  \
+  template class PIGEON_API std::function<void(ValueType*)>; \
+  template class PIGEON_API                                  \
+      pigeon::Shared<ValueType, pigeon::ThreadLocalRefCount>;
 
 namespace pigeon {
 

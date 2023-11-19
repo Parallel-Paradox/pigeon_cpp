@@ -2,6 +2,17 @@
 #define PIGEON_FRAMEWORK_BASE_AUTO_PTR_UNRETAINED
 
 #include "pigeon_framework/base/auto_ptr/shared.hpp"
+#include "pigeon_framework/define.hpp"
+
+#define INSTANTIATE_UNRETAINED_ASYNC(ValueType)              \
+  template class PIGEON_API std::function<void(ValueType*)>; \
+  template class PIGEON_API                                  \
+      pigeon::Unretained<ValueType, pigeon::ThreadSafeRefCount>;
+
+#define INSTANTIATE_UNRETAINED_LOCAL(ValueType)              \
+  template class PIGEON_API std::function<void(ValueType*)>; \
+  template class PIGEON_API                                  \
+      pigeon::Unretained<ValueType, pigeon::ThreadLocalRefCount>;
 
 namespace pigeon {
 
