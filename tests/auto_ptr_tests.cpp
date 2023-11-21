@@ -18,3 +18,18 @@ TEST(AutoPtrTests, CustomDestructor) {
   }
   EXPECT_EQ(destruct_cnt, 2);
 }
+
+TEST(AutoPtrTests, UpgradeUnretained) {
+  UnretainedLocal<int32_t> unretained;
+  {
+    auto shared = SharedLocal<int32_t>::New(0);
+    EXPECT_EQ(shared.UnretainedRefCnt(), 0);
+    unretained = UnretainedLocal<int32_t>(shared);
+    EXPECT_EQ(shared.RefCnt(), 1);
+    EXPECT_EQ(shared.UnretainedRefCnt(), 1);
+    auto retained = unretained.TryUpgrade();
+    EXPECT_EQ(retained.RefCnt(), 2);
+  }
+  auto retained = unretained.TryUpgrade();
+  EXPECT_TRUE(retained.IsNull());
+}

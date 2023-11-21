@@ -22,8 +22,9 @@ class Owned {
       : raw_ptr_(raw_ptr), destructor_(destructor) {}
 
   template <typename... Args>
-  explicit Owned(Args... args, Destructor destructor = DefaultDestructor)
-      : raw_ptr_(new T(args...)), destructor_(destructor) {}
+  static Owned New(Args&&... args) {
+    return Owned(new T(args...));
+  }
 
   Owned(const Owned& other) = delete;
 
