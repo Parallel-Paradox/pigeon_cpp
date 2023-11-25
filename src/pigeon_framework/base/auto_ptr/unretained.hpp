@@ -23,16 +23,15 @@ class Unretained {
 
   Unretained() = default;
 
-  explicit Unretained(Shared<T, R>& ptr)
+  explicit Unretained(const Shared<T, R>& ptr)
       : raw_ptr_(ptr.raw_ptr_),
         ref_cnt_(ptr.ref_cnt_),
         destructor_(ptr.destructor_) {
-    if (ptr.unretained_ref_cnt_ == nullptr) {  // Lazy initialize
-      ptr.unretained_ref_cnt_ = new R();
-    } else {
-      ptr.unretained_ref_cnt_->Increase();
+    if (ptr.IsNull()) {
+      return;
     }
     unretained_ref_cnt_ = ptr.unretained_ref_cnt_;
+    unretained_ref_cnt_->Increase();
   }
 
   Unretained(const Unretained& other)
@@ -79,13 +78,17 @@ class Unretained {
   }
 
   Shared<T, R> TryUpgrade() const {
-    if (ref_cnt_ != nullptr && ref_cnt_->Get() != 0) {
+    if (!IsNull()) {
       ref_cnt_->Increase();
       return Shared<T, R>(raw_ptr_, ref_cnt_, unretained_ref_cnt_, destructor_);
     } else {
       return Shared<T, R>();
     }
   }
+
+  T* Get() const { return raw_ptr_; }
+
+  bool IsNull() const { return ref_cnt_ == nullptr || ref_cnt_->Get() == 0; }
 
  private:
   T* raw_ptr_{nullptr};

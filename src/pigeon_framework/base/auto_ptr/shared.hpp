@@ -27,7 +27,7 @@ struct RefCount {
 };
 
 struct ThreadLocalRefCount : public RefCount {
-  size_t cnt_{1};
+  size_t cnt_{0};
 
   size_t Get() override { return cnt_; }
 
@@ -42,7 +42,7 @@ struct ThreadLocalRefCount : public RefCount {
 };
 
 struct ThreadSafeRefCount : public RefCount {
-  std::atomic_size_t cnt_{1};
+  std::atomic_size_t cnt_{0};
 
   size_t Get() override { return cnt_.load(); }
 
@@ -88,7 +88,12 @@ class Shared {
   }
 
   Shared(T* raw_ptr, Destructor destructor = DefaultDestructor)
-      : raw_ptr_(raw_ptr), ref_cnt_(new R()), destructor_(destructor) {}
+      : raw_ptr_(raw_ptr),
+        ref_cnt_(new R()),
+        unretained_ref_cnt_(new R()),
+        destructor_(destructor) {
+    ref_cnt_->Increase();
+  }
 
   template <typename... Args>
   static Shared New(Args&&... args) {
@@ -130,12 +135,7 @@ class Shared {
 
   size_t RefCnt() const { return ref_cnt_->Get(); }
 
-  size_t UnretainedRefCnt() const {
-    if (unretained_ref_cnt_ == nullptr) {
-      return 0;
-    }
-    return unretained_ref_cnt_->Get();
-  }
+  size_t UnretainedRefCnt() const { return unretained_ref_cnt_->Get(); }
 
  private:
   friend class Unretained<T, R>;
@@ -151,7 +151,7 @@ class Shared {
 
   T* raw_ptr_{nullptr};
   RefCount* ref_cnt_{nullptr};
-  RefCount* unretained_ref_cnt_{nullptr};  // Lazy initialized
+  RefCount* unretained_ref_cnt_{nullptr};
   Destructor destructor_;
 };
 
