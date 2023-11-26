@@ -126,7 +126,7 @@ class Array {
 
   Array(const Array& other) {
     if constexpr (!std::copyable<T>) {
-      throw std::invalid_argument("The type of array can't be copy.");
+      throw std::invalid_argument("This type is supposed to be copyable.");
     } else {
       size_ = other.size_;
       capacity_ = other.capacity_;
@@ -188,7 +188,7 @@ class Array {
 
   void PushBack(const T& val) {
     if constexpr (!std::copyable<T>) {
-      throw std::invalid_argument("The type of array can't be copy.");
+      throw std::invalid_argument("This type is supposed to be copyable.");
     } else {
       EnsureNotFull();
       data_[size_] = val;
@@ -265,7 +265,7 @@ class Array {
 
   void Insert(size_t index, const T& val) {
     if constexpr (!std::copyable<T>) {
-      throw std::invalid_argument("The type of array can't be copy.");
+      throw std::invalid_argument("This type is supposed to be copyable.");
     } else {
       Insert(index, T(val));
     }

@@ -54,7 +54,7 @@ TEST(ArrayTests, CopyConstructedFail) {
     Array<OwnedInt> dst(src);
     EXPECT_TRUE(false);
   } catch (std::invalid_argument e) {
-    EXPECT_STREQ(e.what(), "The type of array can't be copy.");
+    EXPECT_STREQ(e.what(), "This type is supposed to be copyable.");
   }
 }
 
@@ -86,7 +86,7 @@ TEST(ArrayTests, SetByCopyFail) {
     dst = src;
     EXPECT_TRUE(false);
   } catch (std::invalid_argument e) {
-    EXPECT_STREQ(e.what(), "The type of array can't be copy.");
+    EXPECT_STREQ(e.what(), "This type is supposed to be copyable.");
   }
 }
 
@@ -163,14 +163,14 @@ TEST(ArrayTests, MovableFailOps) {
     array.PushBack(OwnedInt(0, &destruct_cnt));
     EXPECT_TRUE(false);
   } catch (std::invalid_argument e) {
-    EXPECT_STREQ(e.what(), "The type of array can't be copy.");
+    EXPECT_STREQ(e.what(), "This type is supposed to be copyable.");
   }
   try {
     OwnedInt num(1, &destruct_cnt);
     array.Insert(1, num);
     EXPECT_TRUE(false);
   } catch (std::invalid_argument e) {
-    EXPECT_STREQ(e.what(), "The type of array can't be copy.");
+    EXPECT_STREQ(e.what(), "This type is supposed to be copyable.");
   }
 }
 
