@@ -66,15 +66,14 @@ class Shared {
   using Destructor = std::function<void(T*)>;
 
   Shared() = default;
+  Shared(const Shared& other) = delete;
 
-  Shared(const Shared& other)
-      : raw_ptr_(other.raw_ptr_),
-        ref_cnt_(other.ref_cnt_),
-        unretained_ref_cnt_(other.unretained_ref_cnt_),
-        destructor_(other.destructor_) {
-    if (ref_cnt_ != nullptr) {
+  Shared Clone() const {
+    auto cloned = Shared(raw_ptr_, ref_cnt_, unretained_ref_cnt_, destructor_);
+    if (ref_cnt_) {
       ref_cnt_->Increase();
     }
+    return cloned;
   }
 
   Shared(Shared&& other) noexcept
@@ -103,7 +102,7 @@ class Shared {
   Shared& operator=(const Shared& other) {
     if (this != &other) {
       this->~Shared();
-      new (this) Shared(other);
+      new (this) Shared(other.Clone());
     }
     return *this;
   }

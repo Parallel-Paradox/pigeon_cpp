@@ -34,14 +34,18 @@ class Unretained {
     unretained_ref_cnt_->Increase();
   }
 
-  Unretained(const Unretained& other)
-      : raw_ptr_(other.raw_ptr_),
-        ref_cnt_(other.ref_cnt_),
-        unretained_ref_cnt_(other.unretained_ref_cnt_),
-        destructor_(other.destructor_) {
-    if (unretained_ref_cnt_ != nullptr) {
+  Unretained(const Unretained& other) = delete;
+
+  Unretained Clone() const {
+    Unretained cloned = Unretained();
+    cloned.raw_ptr_ = raw_ptr_;
+    cloned.ref_cnt_ = ref_cnt_;
+    cloned.unretained_ref_cnt_ = unretained_ref_cnt_;
+    cloned.destructor_ = destructor_;
+    if (unretained_ref_cnt_) {
       unretained_ref_cnt_->Increase();
     }
+    return cloned;
   }
 
   Unretained(Unretained&& other) noexcept
@@ -64,7 +68,7 @@ class Unretained {
   Unretained& operator=(const Unretained& other) {
     if (this != &other) {
       this->~Unretained();
-      new (this) Unretained(other);
+      new (this) Unretained(other.Clone());
     }
     return *this;
   }
