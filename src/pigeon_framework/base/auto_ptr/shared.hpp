@@ -84,6 +84,7 @@ class Shared {
     other.raw_ptr_ = nullptr;
     other.ref_cnt_ = nullptr;
     other.unretained_ref_cnt_ = nullptr;
+    other.destructor_ = DefaultDestructor;
   }
 
   Shared(T* raw_ptr, Destructor destructor = DefaultDestructor)
@@ -151,7 +152,7 @@ class Shared {
   T* raw_ptr_{nullptr};
   RefCount* ref_cnt_{nullptr};
   RefCount* unretained_ref_cnt_{nullptr};
-  Destructor destructor_;
+  Destructor destructor_{DefaultDestructor};
 };
 
 template <typename T>

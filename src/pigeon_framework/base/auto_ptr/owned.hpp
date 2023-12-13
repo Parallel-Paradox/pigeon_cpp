@@ -31,6 +31,7 @@ class Owned {
   Owned(Owned&& other) noexcept
       : raw_ptr_(other.raw_ptr_), destructor_(other.destructor_) {
     other.raw_ptr_ = nullptr;
+    other.destructor_ = DefaultDestructor;
   }
 
   Owned& operator=(Owned&& other) noexcept {
@@ -55,7 +56,7 @@ class Owned {
   static void DefaultDestructor(T* raw_ptr) { delete raw_ptr; }
 
   T* raw_ptr_{nullptr};
-  Destructor destructor_;
+  Destructor destructor_{DefaultDestructor};
 };
 
 }  // namespace pigeon
