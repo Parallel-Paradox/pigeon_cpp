@@ -145,14 +145,11 @@ class Array {
     return *this;
   }
 
-  Array(Array&& other) noexcept {
-    size_ = other.size_;
-    capacity_ = other.capacity_;
-    data_ = new T[capacity_]();
-    for (size_t i = 0; i < size_; ++i) {
-      data_[i] = std::move(other.data_[i]);
-    }
-    other.Clear();
+  Array(Array&& other) noexcept
+      : size_(other.size_), capacity_(other.capacity_), data_(other.data_) {
+    other.size_ = 0;
+    other.capacity_ = 0;
+    other.data_ = nullptr;
   }
 
   Array& operator=(Array&& other) noexcept {
@@ -300,6 +297,8 @@ class Array {
   }
 
   bool IsEmpty() const { return size_ == 0; }
+
+  T* Get() const { return data_; }
 
   size_t Size() const { return size_; }
 

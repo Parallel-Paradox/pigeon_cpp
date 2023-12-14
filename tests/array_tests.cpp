@@ -3,42 +3,10 @@
 #include <exception>
 #include <iterator>
 #include <stdexcept>
+#include "pigeon_framework/base/auto_ptr/owned.hpp"
 #include "pigeon_framework/base/container/array.hpp"
 
 using namespace pigeon;
-
-class OwnedInt {
- public:
-  OwnedInt() = default;
-
-  OwnedInt(int32_t num, int32_t* destruct_cnt)
-      : num_(num), destruct_cnt_(destruct_cnt) {}
-
-  OwnedInt(const OwnedInt& other) = delete;
-
-  OwnedInt(OwnedInt&& other) {
-    num_ = other.num_;
-    destruct_cnt_ = other.destruct_cnt_;
-    other.destruct_cnt_ = nullptr;
-  }
-
-  OwnedInt& operator=(OwnedInt&& other) {
-    if (this != &other) {
-      this->~OwnedInt();
-      new (this) OwnedInt(std::move(other));
-    }
-    return *this;
-  }
-
-  ~OwnedInt() {
-    if (destruct_cnt_ != nullptr) {
-      (*destruct_cnt_)++;
-    }
-  }
-
-  int32_t num_{0};
-  int32_t* destruct_cnt_{nullptr};
-};
 
 TEST(ArrayTests, CopyConstructed) {
   Array<int32_t> src = {0, 1};
@@ -49,25 +17,30 @@ TEST(ArrayTests, CopyConstructed) {
 }
 
 TEST(ArrayTests, CopyConstructedFail) {
-  Array<OwnedInt> src;
-  try {
-    Array<OwnedInt> dst(src);
-    EXPECT_TRUE(false);
-  } catch (std::invalid_argument e) {
-    EXPECT_STREQ(e.what(), "This type is supposed to be copyable.");
-  }
+  Array<Owned<int32_t>> src;
+  EXPECT_THROW(Array<Owned<int32_t>> dst(src), std::invalid_argument);
 }
 
 TEST(ArrayTests, MoveConstructed) {
   int32_t destruct_cnt = 0;
-  Array<OwnedInt> src;
-  src.EmplaceBack(OwnedInt(0, &destruct_cnt));
-  src.EmplaceBack(OwnedInt(1, &destruct_cnt));
-  Array<OwnedInt> dst(std::move(src));
-  EXPECT_TRUE(src.IsEmpty());
-  EXPECT_EQ(dst[0].num_, 0);
-  EXPECT_EQ(dst[1].num_, 1);
-  EXPECT_EQ(destruct_cnt, 0);
+  auto destructor = [&destruct_cnt](int32_t* ptr) {
+    delete ptr;
+    destruct_cnt += 1;
+  };
+
+  {
+    Array<Owned<int32_t>> src;
+    src.EmplaceBack(Owned<int32_t>(new int32_t(0), destructor));
+    src.EmplaceBack(Owned<int32_t>(new int32_t(1), destructor));
+    auto* raw_src = src.Get();
+    Array<Owned<int32_t>> dst(std::move(src));
+    EXPECT_TRUE(src.IsEmpty());
+    EXPECT_EQ(*dst[0], 0);
+    EXPECT_EQ(*dst[1], 1);
+    EXPECT_EQ(raw_src, dst.Get());
+    EXPECT_EQ(destruct_cnt, 0);
+  }
+  EXPECT_EQ(destruct_cnt, 2);
 }
 
 TEST(ArrayTests, SetByCopy) {
@@ -80,27 +53,27 @@ TEST(ArrayTests, SetByCopy) {
 }
 
 TEST(ArrayTests, SetByCopyFail) {
-  Array<OwnedInt> src;
-  try {
-    Array<OwnedInt> dst;
-    dst = src;
-    EXPECT_TRUE(false);
-  } catch (std::invalid_argument e) {
-    EXPECT_STREQ(e.what(), "This type is supposed to be copyable.");
-  }
+  Array<Owned<int32_t>> src;
+  Array<Owned<int32_t>> dst;
+  EXPECT_THROW(dst = src, std::invalid_argument);
 }
 
 TEST(ArrayTests, SetByMove) {
   int32_t destruct_cnt = 0;
-  Array<OwnedInt> src;
-  src.EmplaceBack(OwnedInt(0, &destruct_cnt));
-  src.EmplaceBack(OwnedInt(1, &destruct_cnt));
-  Array<OwnedInt> dst;
-  dst.EmplaceBack(OwnedInt(2, &destruct_cnt));
+  auto destructor = [&destruct_cnt](int32_t* ptr) {
+    delete ptr;
+    destruct_cnt += 1;
+  };
+
+  Array<Owned<int32_t>> src;
+  src.EmplaceBack(Owned<int32_t>(new int32_t(0), destructor));
+  src.EmplaceBack(Owned<int32_t>(new int32_t(1), destructor));
+  Array<Owned<int32_t>> dst;
+  dst.EmplaceBack(Owned<int32_t>(new int32_t(2), destructor));
   dst = std::move(src);
   EXPECT_TRUE(src.IsEmpty());
-  EXPECT_EQ(dst[0].num_, 0);
-  EXPECT_EQ(dst[1].num_, 1);
+  EXPECT_EQ(*dst[0], 0);
+  EXPECT_EQ(*dst[1], 1);
   EXPECT_EQ(destruct_cnt, 1);
 }
 
@@ -157,43 +130,17 @@ TEST(ArrayTests, CopyableCommonOps) {
 }
 
 TEST(ArrayTests, MovableFailOps) {
-  int32_t destruct_cnt = 0;
-  Array<OwnedInt> array;
-  try {
-    array.PushBack(OwnedInt(0, &destruct_cnt));
-    EXPECT_TRUE(false);
-  } catch (std::invalid_argument e) {
-    EXPECT_STREQ(e.what(), "This type is supposed to be copyable.");
-  }
-  try {
-    OwnedInt num(1, &destruct_cnt);
-    array.Insert(1, num);
-    EXPECT_TRUE(false);
-  } catch (std::invalid_argument e) {
-    EXPECT_STREQ(e.what(), "This type is supposed to be copyable.");
-  }
+  Array<Owned<int32_t>> array;
+  EXPECT_THROW(array.PushBack(Owned<int32_t>::New(0)), std::invalid_argument);
+  auto num = Owned<int32_t>::New(1);
+  EXPECT_THROW(array.Insert(1, num), std::invalid_argument);
 }
 
 TEST(ArrayTests, OutOfRangeFailOps) {
   Array<int32_t> array;
-  try {
-    array.Insert(1, 1);
-    EXPECT_TRUE(false);
-  } catch (std::out_of_range e) {
-    EXPECT_STREQ(e.what(), "Insert out of range.");
-  }
-  try {
-    array.Remove(1);
-    EXPECT_TRUE(false);
-  } catch (std::out_of_range e) {
-    EXPECT_STREQ(e.what(), "Remove out of range.");
-  }
-  try {
-    array.SwapRemove(1);
-    EXPECT_TRUE(false);
-  } catch (std::out_of_range e) {
-    EXPECT_STREQ(e.what(), "Remove out of range.");
-  }
+  EXPECT_THROW(array.Insert(1, 1), std::out_of_range);
+  EXPECT_THROW(array.Remove(1), std::out_of_range);
+  EXPECT_THROW(array.SwapRemove(1), std::out_of_range);
 }
 
 TEST(ArrayTests, IterateArray) {
